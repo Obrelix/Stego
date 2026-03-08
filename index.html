@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEGØ — Hidden in Plain Sight</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg-deep: #0a0a0f;
+    --bg-panel: #0d0d14;
+    --bg-input: #111119;
+    --border: #1a1a2e;
+    --border-glow: #00ff8855;
+    --green: #00ff88;
+    --green-dim: #00cc6a;
+    --green-dark: #003d20;
+    --cyan: #00e5ff;
+    --red: #ff3355;
+    --amber: #ffaa00;
+    --text: #c8c8d0;
+    --text-dim: #606070;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Orbitron', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 136, 0.015) 2px,
+      rgba(0, 255, 136, 0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* CRT vignette */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* Subtle grid background */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .header h1 {
+    font-family: var(--display);
+    font-size: 2.6rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--green);
+    text-shadow: 0 0 30px rgba(0,255,136,0.4), 0 0 60px rgba(0,255,136,0.15);
+    animation: titlePulse 4s ease-in-out infinite;
+  }
+
+  .header .subtitle {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .header .line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    margin-top: 20px;
+    opacity: 0.4;
+  }
+
+  @keyframes titlePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  /* ─── Mode Toggle ─── */
+  .mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 32px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .mode-btn {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 10px 28px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.25s;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .mode-btn:hover { color: var(--text); }
+
+  .mode-btn.active {
+    background: var(--green-dark);
+    border-color: var(--green);
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,255,136,0.3);
+  }
+
+  /* ─── Panels ─── */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+  }
+
+  .panel-header .dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ─── Drop Zone ─── */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--green);
+    background: rgba(0,255,136,0.03);
+  }
+
+  .drop-zone .icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+  }
+
+  .drop-zone .label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .drop-zone .label span {
+    color: var(--green);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Image preview */
+  .image-preview {
+    display: none;
+    margin-top: 16px;
+    position: relative;
+  }
+
+  .image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: block;
+  }
+
+  .image-info {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  .image-info .tag {
+    color: var(--green);
+  }
+
+  /* ─── Inputs ─── */
+  .field { margin-bottom: 18px; }
+
+  .field label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .field textarea,
+  .field input[type="password"],
+  .field input[type="text"] {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.25s;
+    resize: vertical;
+  }
+
+  .field textarea:focus,
+  .field input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px rgba(0,255,136,0.15);
+  }
+
+  .field textarea { min-height: 100px; }
+
+  .char-count {
+    text-align: right;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .char-count .warn { color: var(--amber); }
+  .char-count .over { color: var(--red); }
+
+  /* ─── Action Button ─── */
+  .action-btn {
+    width: 100%;
+    padding: 14px;
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: 1px solid var(--green);
+    background: linear-gradient(180deg, rgba(0,255,136,0.15), rgba(0,255,136,0.05));
+    color: var(--green);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(0,255,136,0.25), rgba(0,255,136,0.1));
+    box-shadow: 0 0 20px rgba(0,255,136,0.15);
+    text-shadow: 0 0 10px rgba(0,255,136,0.5);
+  }
+
+  .action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .action-btn:active:not(:disabled) {
+    transform: scale(0.995);
+  }
+
+  /* ─── Output / Result ─── */
+  .result-area {
+    display: none;
+    margin-top: 24px;
+  }
+
+  .result-area.visible { display: block; }
+
+  .result-image-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .result-image-wrap img {
+    max-width: 100%;
+    max-height: 300px;
+    border: 1px solid var(--green-dark);
+    border-radius: 4px;
+  }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 10px 20px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    background: var(--bg-input);
+    border: 1px solid var(--green);
+    color: var(--green);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-decoration: none;
+  }
+
+  .download-btn:hover {
+    background: rgba(0,255,136,0.1);
+    box-shadow: 0 0 12px rgba(0,255,136,0.15);
+  }
+
+  /* Decoded message output */
+  .decoded-msg {
+    background: var(--bg-input);
+    border: 1px solid var(--green-dark);
+    border-radius: 4px;
+    padding: 16px;
+    color: var(--green);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  /* ─── Status / Log ─── */
+  .status-bar {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border-left: 3px solid var(--border);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    display: none;
+  }
+
+  .status-bar.visible { display: block; }
+  .status-bar.success { border-left-color: var(--green); color: var(--green); }
+  .status-bar.error { border-left-color: var(--red); color: var(--red); }
+  .status-bar.working { border-left-color: var(--amber); color: var(--amber); }
+
+  /* ─── Capacity Meter ─── */
+  .capacity-bar {
+    display: none;
+    margin-bottom: 18px;
+  }
+
+  .capacity-bar.visible { display: block; }
+
+  .capacity-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .capacity-track {
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .capacity-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.3s, background 0.3s;
+    box-shadow: 0 0 6px rgba(0,255,136,0.4);
+  }
+
+  .capacity-fill.warn { background: var(--amber); box-shadow: 0 0 6px rgba(255,170,0,0.4); }
+  .capacity-fill.over { background: var(--red); box-shadow: 0 0 6px rgba(255,51,85,0.4); }
+
+  /* ─── Hidden ─── */
+  .hidden { display: none !important; }
+
+  /* ─── Footer ─── */
+  .footer {
+    text-align: center;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 40px;
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 600px) {
+    .header h1 { font-size: 1.6rem; }
+    .container { padding: 20px 14px 40px; }
+    .panel { padding: 20px; }
+  }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--green-dark); }
+
+  /* Password visibility toggle */
+  .pass-wrap {
+    position: relative;
+  }
+
+  .pass-wrap input {
+    padding-right: 44px;
+  }
+
+  .pass-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .pass-toggle:hover { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<div class="container">
+  <header class="header">
+    <h1>STEGØ</h1>
+    <div class="subtitle">Hidden in Plain Sight — LSB Steganography</div>
+    <div class="line"></div>
+  </header>
+
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="encode" onclick="switchMode('encode')">⟨ Encode ⟩</button>
+    <button class="mode-btn" data-mode="decode" onclick="switchMode('decode')">⟨ Decode ⟩</button>
+  </div>
+
+  <!-- ═══ ENCODE SECTION ═══ -->
+  <div id="encode-section">
+    <div class="panel">
+      <div class="panel-header"><span class="dot"></span> Image Carrier</div>
+      <div class="drop-zone" id="encode-drop">
+        <div class="icon">⬡</div>
+        <div class="label">Drop image here or <span>browse files</span></div>
+        <input type="file" accept="image/*" id="encode-file" onchange="handleImage(this, 'encode')">
+      </div>
+      <div class="image-preview" id="encode-preview">
+        <img id="encode-img">
+        <div class="image-info">
+          <span><span class="tag">DIM</span> <span id="encode-dim">-</span></span>
+          <span><span class="tag">CAP</span> <span id="encode-cap">-</span></span>
+          <span><span class="tag">FMT</span> <span id="encode-fmt">-</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="dot"></span> Payload</div>
+
+      <div class="capacity-bar" id="cap-bar">
+        <div class="capacity-label">
+          <span>Capacity Usage</span>
+          <span id="cap-pct">0%</span>
+        </div>
+        <div class="capacity-track">
+          <div class="capacity-fill" id="cap-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Secret Message</label>
+        <textarea id="encode-msg" placeholder="Type your secret message here..." oninput="updateCapacity()"></textarea>
+        <div class="char-count"><span id="encode-chars">0</span> chars</div>
+      </div>
+
+      <div class="field">
+        <label>Passphrase</label>
+        <div class="pass-wrap">
+          <input type="password" id="encode-pass" placeholder="Enter encryption passphrase">
+          <button class="pass-toggle" onclick="togglePass('encode-pass', this)">SHOW</button>
+        </div>
+      </div>
+
+      <button class="action-btn" id="encode-btn" onclick="encode()" disabled>⟨ Encode Message ⟩</button>
+    </div>
+
+    <div class="result-area" id="encode-result">
+      <div class="panel">
+        <div class="panel-header"><span class="dot"></span> Output — Steganographed Image</div>
+        <div class="result-image-wrap">
+          <img id="result-img">
+        </div>
+        <br>
+        <a class="download-btn" id="download-link" download="stego_output.png">↓ Download PNG</a>
+      </div>
+    </div>
+
+    <div class="status-bar" id="encode-status"></div>
+  </div>
+
+  <!-- ═══ DECODE SECTION ═══ -->
+  <div id="decode-section" class="hidden">
+    <div class="panel">
+      <div class="panel-header"><span class="dot"></span> Steganographed Image</div>
+      <div class="drop-zone" id="decode-drop">
+        <div class="icon">⬢</div>
+        <div class="label">Drop encoded image here or <span>browse files</span></div>
+        <input type="file" accept="image/*" id="decode-file" onchange="handleImage(this, 'decode')">
+      </div>
+      <div class="image-preview" id="decode-preview">
+        <img id="decode-img">
+        <div class="image-info">
+          <span><span class="tag">DIM</span> <span id="decode-dim">-</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="dot"></span> Decryption</div>
+      <div class="field">
+        <label>Passphrase</label>
+        <div class="pass-wrap">
+          <input type="password" id="decode-pass" placeholder="Enter decryption passphrase">
+          <button class="pass-toggle" onclick="togglePass('decode-pass', this)">SHOW</button>
+        </div>
+      </div>
+
+      <button class="action-btn" id="decode-btn" onclick="decode()" disabled>⟨ Decode Message ⟩</button>
+    </div>
+
+    <div class="result-area" id="decode-result">
+      <div class="panel">
+        <div class="panel-header"><span class="dot"></span> Extracted Message</div>
+        <div class="decoded-msg" id="decoded-msg"></div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="decode-status"></div>
+  </div>
+
+  <div class="footer">
+    STEGØ — 1-bit LSB · AES-256-GCM · Client-side only · No data leaves your browser
+  </div>
+</div>
+
+<!-- Hidden canvas -->
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
+let encodeImageData = null;
+let decodeImageData = null;
+let encodeWidth = 0, encodeHeight = 0;
+let decodeWidth = 0, decodeHeight = 0;
+let maxPayloadBytes = 0;
+
+// ─────────────────────────────────────────────
+// UI Helpers
+// ─────────────────────────────────────────────
+function switchMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  document.getElementById('encode-section').classList.toggle('hidden', mode !== 'encode');
+  document.getElementById('decode-section').classList.toggle('hidden', mode !== 'decode');
+}
+
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'HIDE'; }
+  else { inp.type = 'password'; btn.textContent = 'SHOW'; }
+}
+
+function setStatus(section, msg, type) {
+  const el = document.getElementById(section + '-status');
+  el.textContent = '> ' + msg;
+  el.className = 'status-bar visible ' + type;
+}
+
+function hideStatus(section) {
+  document.getElementById(section + '-status').className = 'status-bar';
+}
+
+function updateCapacity() {
+  const msg = document.getElementById('encode-msg').value;
+  const len = new TextEncoder().encode(msg).length;
+  document.getElementById('encode-chars').textContent = msg.length;
+  if (maxPayloadBytes <= 0) return;
+
+  // Account for overhead: 16 salt + 12 iv + 16 auth tag + 4 length header
+  const overhead = 48;
+  // Encrypted length is roughly equal to plaintext length for AES-GCM
+  const estimatedTotal = len + overhead;
+  const pct = Math.min((estimatedTotal / maxPayloadBytes) * 100, 100);
+
+  document.getElementById('cap-pct').textContent = pct.toFixed(1) + '%';
+  const fill = document.getElementById('cap-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'capacity-fill' + (pct > 95 ? ' over' : pct > 75 ? ' warn' : '');
+
+  validateEncode();
+}
+
+function validateEncode() {
+  const hasImage = encodeImageData !== null;
+  const hasMsg = document.getElementById('encode-msg').value.trim().length > 0;
+  const hasPass = document.getElementById('encode-pass').value.length > 0;
+  document.getElementById('encode-btn').disabled = !(hasImage && hasMsg && hasPass);
+}
+
+function validateDecode() {
+  const hasImage = decodeImageData !== null;
+  const hasPass = document.getElementById('decode-pass').value.length > 0;
+  document.getElementById('decode-btn').disabled = !(hasImage && hasPass);
+}
+
+// Attach input listeners for validation
+document.getElementById('encode-msg').addEventListener('input', validateEncode);
+document.getElementById('encode-pass').addEventListener('input', validateEncode);
+document.getElementById('decode-pass').addEventListener('input', validateDecode);
+
+// ─────────────────────────────────────────────
+// Image Loading
+// ─────────────────────────────────────────────
+function handleImage(input, mode) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.getElementById('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, img.width, img.height);
+
+      if (mode === 'encode') {
+        encodeImageData = data;
+        encodeWidth = img.width;
+        encodeHeight = img.height;
+        // 1-bit LSB: 3 bits per pixel (R,G,B), 8 bits per byte, minus 4 bytes for length header
+        maxPayloadBytes = Math.floor((img.width * img.height * 3) / 8) - 4;
+        document.getElementById('encode-img').src = e.target.result;
+        document.getElementById('encode-preview').style.display = 'block';
+        document.getElementById('encode-dim').textContent = img.width + '×' + img.height;
+        document.getElementById('encode-cap').textContent = formatBytes(maxPayloadBytes);
+        document.getElementById('encode-fmt').textContent = file.type.split('/')[1].toUpperCase();
+        document.getElementById('cap-bar').classList.add('visible');
+        updateCapacity();
+      } else {
+        decodeImageData = data;
+        decodeWidth = img.width;
+        decodeHeight = img.height;
+        document.getElementById('decode-img').src = e.target.result;
+        document.getElementById('decode-preview').style.display = 'block';
+        document.getElementById('decode-dim').textContent = img.width + '×' + img.height;
+        validateDecode();
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ─── Drag and Drop ───
+['encode-drop', 'decode-drop'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    const input = el.querySelector('input[type="file"]');
+    input.files = e.dataTransfer.files;
+    input.dispatchEvent(new Event('change'));
+  });
+});
+
+// ─────────────────────────────────────────────
+// Crypto (AES-256-GCM with PBKDF2)
+// ─────────────────────────────────────────────
+async function deriveKey(passphrase, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptMessage(plaintext, passphrase) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(passphrase, salt);
+  const enc = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    enc.encode(plaintext)
+  );
+  // Concat: salt(16) + iv(12) + ciphertext(includes 16-byte auth tag)
+  const result = new Uint8Array(16 + 12 + ciphertext.byteLength);
+  result.set(salt, 0);
+  result.set(iv, 16);
+  result.set(new Uint8Array(ciphertext), 28);
+  return result;
+}
+
+async function decryptMessage(data, passphrase) {
+  const salt = data.slice(0, 16);
+  const iv = data.slice(16, 28);
+  const ciphertext = data.slice(28);
+  const key = await deriveKey(passphrase, salt);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    ciphertext
+  );
+  return new TextDecoder().decode(decrypted);
+}
+
+// ─────────────────────────────────────────────
+// LSB Steganography — 1-bit
+// ─────────────────────────────────────────────
+function embedBits(imageData, payload) {
+  // Payload format: [4 bytes big-endian length][payload bytes]
+  const length = payload.length;
+  const header = new Uint8Array(4);
+  header[0] = (length >> 24) & 0xff;
+  header[1] = (length >> 16) & 0xff;
+  header[2] = (length >> 8) & 0xff;
+  header[3] = length & 0xff;
+
+  const fullPayload = new Uint8Array(4 + length);
+  fullPayload.set(header, 0);
+  fullPayload.set(payload, 4);
+
+  const totalBits = fullPayload.length * 8;
+  const pixels = imageData.data;
+  // Available bits: 3 per pixel (R, G, B — skip A)
+  const availableBits = (pixels.length / 4) * 3;
+
+  if (totalBits > availableBits) {
+    throw new Error('Message too large for this image. Need ' + totalBits + ' bits, have ' + availableBits);
+  }
+
+  let bitIndex = 0;
+  for (let i = 0; i < pixels.length && bitIndex < totalBits; i++) {
+    // Skip alpha channel (every 4th byte)
+    if ((i % 4) === 3) continue;
+
+    const byteIdx = Math.floor(bitIndex / 8);
+    const bitPos = 7 - (bitIndex % 8);
+    const bit = (fullPayload[byteIdx] >> bitPos) & 1;
+
+    // Clear LSB and set our bit
+    pixels[i] = (pixels[i] & 0xFE) | bit;
+    bitIndex++;
+  }
+
+  return imageData;
+}
+
+function extractBits(imageData) {
+  const pixels = imageData.data;
+
+  // First extract 4-byte length header (32 bits)
+  let bitIndex = 0;
+  const header = new Uint8Array(4);
+  for (let i = 0; i < pixels.length && bitIndex < 32; i++) {
+    if ((i % 4) === 3) continue;
+    const byteIdx = Math.floor(bitIndex / 8);
+    const bitPos = 7 - (bitIndex % 8);
+    header[byteIdx] |= (pixels[i] & 1) << bitPos;
+    bitIndex++;
+  }
+
+  const length = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+
+  // Sanity check
+  const maxPossible = Math.floor(((pixels.length / 4) * 3) / 8) - 4;
+  if (length <= 0 || length > maxPossible) {
+    throw new Error('No valid hidden data found (invalid length header: ' + length + ')');
+  }
+
+  // Extract payload
+  const totalBits = (4 + length) * 8;
+  bitIndex = 0;
+  const fullPayload = new Uint8Array(4 + length);
+  for (let i = 0; i < pixels.length && bitIndex < totalBits; i++) {
+    if ((i % 4) === 3) continue;
+    const byteIdx = Math.floor(bitIndex / 8);
+    const bitPos = 7 - (bitIndex % 8);
+    fullPayload[byteIdx] |= (pixels[i] & 1) << bitPos;
+    bitIndex++;
+  }
+
+  return fullPayload.slice(4);
+}
+
+// ─────────────────────────────────────────────
+// Encode Action
+// ─────────────────────────────────────────────
+async function encode() {
+  const msg = document.getElementById('encode-msg').value;
+  const pass = document.getElementById('encode-pass').value;
+
+  if (!encodeImageData || !msg.trim() || !pass) return;
+
+  try {
+    setStatus('encode', 'Encrypting message with AES-256-GCM...', 'working');
+
+    const encrypted = await encryptMessage(msg, pass);
+
+    setStatus('encode', 'Embedding ' + encrypted.length + ' bytes into pixel LSBs...', 'working');
+
+    // Clone image data so we don't modify the original
+    const canvas = document.getElementById('canvas');
+    canvas.width = encodeWidth;
+    canvas.height = encodeHeight;
+    const ctx = canvas.getContext('2d');
+    const cloned = ctx.createImageData(encodeWidth, encodeHeight);
+    cloned.data.set(encodeImageData.data);
+
+    embedBits(cloned, encrypted);
+
+    ctx.putImageData(cloned, 0, 0);
+
+    const dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('result-img').src = dataUrl;
+    document.getElementById('download-link').href = dataUrl;
+
+    document.getElementById('encode-result').classList.add('visible');
+    setStatus('encode', 'Done. ' + encrypted.length + ' bytes embedded across ' + (encrypted.length * 8) + ' pixel LSBs. Output is lossless PNG.', 'success');
+
+  } catch (err) {
+    setStatus('encode', 'Error: ' + err.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Decode Action
+// ─────────────────────────────────────────────
+async function decode() {
+  const pass = document.getElementById('decode-pass').value;
+
+  if (!decodeImageData || !pass) return;
+
+  try {
+    setStatus('decode', 'Extracting LSB data from pixels...', 'working');
+
+    const extracted = extractBits(decodeImageData);
+
+    setStatus('decode', 'Decrypting ' + extracted.length + ' bytes with AES-256-GCM...', 'working');
+
+    const plaintext = await decryptMessage(extracted, pass);
+
+    document.getElementById('decoded-msg').textContent = plaintext;
+    document.getElementById('decode-result').classList.add('visible');
+    setStatus('decode', 'Decryption successful. Message length: ' + plaintext.length + ' characters.', 'success');
+
+  } catch (err) {
+    let msg = err.message;
+    if (msg.includes('decrypt') || msg.includes('operation')) {
+      msg = 'Decryption failed — wrong passphrase or image does not contain a valid STEGØ payload.';
+    }
+    setStatus('decode', msg, 'error');
+    document.getElementById('decode-result').classList.remove('visible');
+  }
+}
+</script>
+</body>
+</html>
