@@ -1,8 +1,6 @@
 'use strict';
 
-// ═══════════════════════════════════════════════
 // Low-Level Bit Read/Write — Configurable Depth & Channels
-// ═══════════════════════════════════════════════
 
 import { CONFIG } from './config.js';
 

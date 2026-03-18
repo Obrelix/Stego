@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STEGØ — Hidden in Plain Sight</title>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 <div class="bg-grid"></div>
@@ -20,6 +21,7 @@
   <div class="mode-toggle">
     <button class="mode-btn active" data-mode="encode">⟨ Encode ⟩</button>
     <button class="mode-btn" data-mode="decode">⟨ Decode ⟩</button>
+    <button class="mode-btn" data-mode="analyze">⟨ Analyze ⟩</button>
   </div>
 
   <!-- ═══ ENCODE SECTION ═══ -->
@@ -42,6 +44,36 @@
     </div>
 
     <div class="panel">
+      <div class="panel-header"><span class="dot"></span> Advanced Settings</div>
+
+      <div class="settings-row">
+        <label class="settings-label">LSB Depth</label>
+        <div class="slider-wrap">
+          <input type="range" id="depth-slider" min="1" max="3" value="1" step="1">
+          <span class="slider-value" id="depth-value">1</span>
+          <span class="slider-hint">bit</span>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label">Channels</label>
+        <div class="channel-toggles">
+          <button class="channel-toggle active" data-channel="1">R</button>
+          <button class="channel-toggle active" data-channel="2">G</button>
+          <button class="channel-toggle active" data-channel="4">B</button>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label">Scatter</label>
+        <label class="toggle-label">
+          <input type="checkbox" id="scatter-toggle">
+          <span class="toggle-text">PRNG-scattered bit distribution</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
       <div class="panel-header"><span class="dot"></span> Payload</div>
 
       <div class="capacity-bar" id="cap-bar">
@@ -54,20 +86,38 @@
         </div>
       </div>
 
-      <div class="field">
-        <label>Secret Message</label>
-        <textarea id="encode-msg" placeholder="Type your secret message here..."></textarea>
-        <div class="char-count"><span id="encode-chars">0</span> chars</div>
+      <div class="payload-type-toggle">
+        <button class="payload-type-btn active" data-type="text">TEXT</button>
+        <button class="payload-type-btn" data-type="file">FILE</button>
+      </div>
+
+      <div id="text-payload-area">
+        <div class="field">
+          <label>Secret Message</label>
+          <textarea id="encode-msg" placeholder="Type your secret message here..."></textarea>
+          <div class="char-count"><span id="encode-chars">0</span> chars</div>
+        </div>
+      </div>
+
+      <div class="file-payload-area" id="file-payload-area">
+        <div class="drop-zone" id="file-drop">
+          <div class="icon">📎</div>
+          <div class="label">Drop file here or <span>browse files</span></div>
+          <input type="file" id="payload-file">
+        </div>
+        <div class="file-info" id="file-info"></div>
       </div>
 
       <div class="field">
         <label>Passphrase</label>
         <div class="pass-wrap">
-          <input type="password" id="encode-pass" placeholder="Enter encryption passphrase">
-          <button class="pass-toggle" data-target="encode-pass">SHOW</button>
+          <input type="password" id="encode-pass" placeholder="Enter encryption passphrase" aria-label="Encryption passphrase">
+          <button class="pass-toggle" data-target="encode-pass" aria-label="Toggle passphrase visibility">SHOW</button>
         </div>
+        <div class="strength-meter"><div class="strength-fill" id="encode-strength-fill"></div></div>
       </div>
 
+      <div class="progress-bar" id="encode-progress"><div class="progress-fill"></div></div>
       <button class="action-btn" id="encode-btn" disabled>⟨ Encode Message ⟩</button>
     </div>
 
@@ -82,7 +132,29 @@
       </div>
     </div>
 
-    <div class="status-bar" id="encode-status"></div>
+    <div class="analysis-panel" id="encode-analysis">
+      <div class="panel">
+        <div class="panel-header"><span class="dot"></span> Analysis</div>
+        <div class="metrics-row">
+          <div class="metric">
+            <div class="metric-value" id="psnr-value">—</div>
+            <div class="metric-label">PSNR (dB)</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="ssim-value">—</div>
+            <div class="metric-label">SSIM</div>
+          </div>
+        </div>
+        <div class="panel-header"><span class="dot"></span> Before / After</div>
+        <div class="comparison-container" id="comparison-container"></div>
+        <div class="panel-header" style="margin-top:1rem;"><span class="dot"></span> LSB Plane (Encoded)</div>
+        <div class="comparison-container">
+          <canvas id="lsb-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="encode-status" role="status" aria-live="polite"></div>
   </div>
 
   <!-- ═══ DECODE SECTION ═══ -->
@@ -107,22 +179,55 @@
       <div class="field">
         <label>Passphrase</label>
         <div class="pass-wrap">
-          <input type="password" id="decode-pass" placeholder="Enter decryption passphrase">
-          <button class="pass-toggle" data-target="decode-pass">SHOW</button>
+          <input type="password" id="decode-pass" placeholder="Enter decryption passphrase" aria-label="Decryption passphrase">
+          <button class="pass-toggle" data-target="decode-pass" aria-label="Toggle passphrase visibility">SHOW</button>
         </div>
+        <div class="strength-meter"><div class="strength-fill" id="decode-strength-fill"></div></div>
       </div>
 
+      <div class="progress-bar" id="decode-progress"><div class="progress-fill"></div></div>
       <button class="action-btn" id="decode-btn" disabled>⟨ Decode Message ⟩</button>
     </div>
 
     <div class="result-area" id="decode-result">
       <div class="panel">
-        <div class="panel-header"><span class="dot"></span> Extracted Message</div>
+        <div class="panel-header"><span class="dot"></span> Extracted Payload</div>
         <div class="decoded-msg" id="decoded-msg"></div>
+        <button class="copy-btn" id="copy-btn" style="display:none;">COPY</button>
+        <a class="download-btn" id="file-download-link" style="display:none;" download>↓ Download File</a>
       </div>
     </div>
 
-    <div class="status-bar" id="decode-status"></div>
+    <div class="status-bar" id="decode-status" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- ═══ ANALYZE SECTION ═══ -->
+  <div id="analyze-section" class="hidden">
+    <div class="panel">
+      <div class="panel-header"><span class="dot"></span> Image to Analyze</div>
+      <div class="drop-zone" id="analyze-drop">
+        <div class="icon">🔍</div>
+        <div class="label">Drop image here or <span>browse files</span></div>
+        <input type="file" accept="image/*" id="analyze-file">
+      </div>
+      <div class="image-preview" id="analyze-preview">
+        <img id="analyze-img">
+        <div class="image-info">
+          <span><span class="tag">DIM</span> <span id="analyze-dim">-</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-area" id="analyze-result">
+      <div class="panel">
+        <div class="panel-header"><span class="dot"></span> LSB Plane</div>
+        <div class="comparison-container">
+          <canvas id="analyze-lsb-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="analyze-status" role="status" aria-live="polite"></div>
   </div>
 
   <div class="footer">

@@ -18,6 +18,8 @@ export function switchMode(mode) {
   );
   document.getElementById('encode-section').classList.toggle('hidden', mode !== 'encode');
   document.getElementById('decode-section').classList.toggle('hidden', mode !== 'decode');
+  const analyzeSection = document.getElementById('analyze-section');
+  if (analyzeSection) analyzeSection.classList.toggle('hidden', mode !== 'analyze');
 }
 
 /**
@@ -108,9 +110,14 @@ function getCapacityClass(pct) {
  */
 export function validateEncode() {
   const hasImage = APP_STATE.encode.imageData !== null;
-  const hasMsg = document.getElementById('encode-msg').value.trim().length > 0;
   const hasPass = document.getElementById('encode-pass').value.length > 0;
-  document.getElementById('encode-btn').disabled = !(hasImage && hasMsg && hasPass);
+  let hasPayload;
+  if (APP_STATE.settings.payloadType === 'file') {
+    hasPayload = APP_STATE.filePayload.file !== null;
+  } else {
+    hasPayload = document.getElementById('encode-msg').value.trim().length > 0;
+  }
+  document.getElementById('encode-btn').disabled = !(hasImage && hasPayload && hasPass);
 }
 
 /**

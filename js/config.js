@@ -39,8 +39,10 @@ export const CONFIG = {
     DEFAULT_DEPTH: 1,
     MAX_DEPTH: 3,
     DEFAULT_CHANNEL_MASK: 0x07,
-    /** Bits used by the v2 outer header (always 1-bit, all RGB, sequential) */
+    /** Slots used by the v2 outer header (always 1-bit, all RGB, sequential) */
     HEADER_SLOT_COUNT: 64,
+    /** Slots used by the scatter salt (16 bytes × 8 bits, sequential after header) */
+    SCATTER_SALT_SLOT_COUNT: 128,
   },
   capacity: {
     WARN_THRESHOLD_PCT: 75,

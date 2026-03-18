@@ -1,0 +1,320 @@
+/* ═══════════════════════════════════════════════ */
+/* Advanced Settings Panel                        */
+/* ═══════════════════════════════════════════════ */
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.08);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  min-width: 90px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(0, 255, 136, 0.6);
+}
+
+/* ─── Depth Slider ─── */
+
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.slider-wrap input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: rgba(0, 255, 136, 0.15);
+  border-radius: 2px;
+  outline: none;
+}
+
+.slider-wrap input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #00ff88;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+
+.slider-wrap input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #00ff88;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+
+.slider-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.2rem;
+  color: #00ff88;
+  min-width: 1.5ch;
+  text-align: center;
+}
+
+.slider-hint {
+  font-size: 0.75rem;
+  color: rgba(0, 255, 136, 0.4);
+  text-transform: lowercase;
+}
+
+/* ─── Channel Toggles ─── */
+
+.channel-toggles {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.channel-toggle {
+  width: 40px;
+  height: 32px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(0, 255, 136, 0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 4px;
+}
+
+.channel-toggle.active {
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+  border-color: #00ff88;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.2);
+}
+
+.channel-toggle:hover {
+  border-color: rgba(0, 255, 136, 0.6);
+}
+
+/* ─── Scatter Toggle ─── */
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 36px;
+  height: 18px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 9px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-label input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: rgba(0, 255, 136, 0.4);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle-label input[type="checkbox"]:checked {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+}
+
+.toggle-label input[type="checkbox"]:checked::after {
+  left: 20px;
+  background: #00ff88;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+}
+
+.toggle-text {
+  font-size: 0.8rem;
+  color: rgba(0, 255, 136, 0.5);
+}
+
+/* ─── Password Strength Meter ─── */
+
+.strength-meter {
+  height: 3px;
+  background: rgba(0, 255, 136, 0.08);
+  border-radius: 2px;
+  margin-top: 0.4rem;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.strength-fill.weak { width: 20%; background: #ff4444; }
+.strength-fill.fair { width: 40%; background: #ff8844; }
+.strength-fill.good { width: 60%; background: #ffcc00; }
+.strength-fill.strong { width: 80%; background: #88ff44; }
+.strength-fill.very-strong { width: 100%; background: #00ff88; }
+
+/* ─── Progress Bar ─── */
+
+.progress-bar {
+  height: 3px;
+  background: rgba(0, 255, 136, 0.08);
+  border-radius: 2px;
+  margin: 0.5rem 0;
+  overflow: hidden;
+  display: none;
+}
+
+.progress-bar.active {
+  display: block;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #00ff88;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+/* ─── Copy Button ─── */
+
+.copy-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 3px;
+  margin-top: 0.5rem;
+}
+
+.copy-btn:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: #00ff88;
+}
+
+.copy-btn.copied {
+  background: rgba(0, 255, 136, 0.3);
+  color: #fff;
+}
+
+/* ─── File Payload UI ─── */
+
+.payload-type-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.payload-type-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  background: transparent;
+  color: rgba(0, 255, 136, 0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.payload-type-btn.active {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border-color: #00ff88;
+}
+
+.file-payload-area {
+  display: none;
+  padding: 1rem;
+  border: 1px dashed rgba(0, 255, 136, 0.2);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.file-payload-area.visible {
+  display: block;
+}
+
+.file-info {
+  font-size: 0.8rem;
+  color: rgba(0, 255, 136, 0.6);
+  margin-top: 0.5rem;
+}
+
+/* ─── Analysis Panel ─── */
+
+.analysis-panel {
+  display: none;
+  padding: 1rem 0;
+}
+
+.analysis-panel.visible {
+  display: block;
+}
+
+.metrics-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.metric {
+  text-align: center;
+}
+
+.metric-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.4rem;
+  color: #00ff88;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(0, 255, 136, 0.5);
+}
+
+.comparison-container {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  border-radius: 4px;
+}
+
+.comparison-container canvas {
+  display: block;
+  width: 100%;
+}

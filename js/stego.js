@@ -1,8 +1,6 @@
 'use strict';
 
-// ═══════════════════════════════════════════════
 // LSB Steganography — v2 Embedding/Extraction
-// ═══════════════════════════════════════════════
 
 import { CONFIG } from './config.js';
 import { calculateMaxPayload, calculateMaxPayloadV2 } from './utils.js';
@@ -67,6 +65,32 @@ function validateLength(length, maxPossible) {
   }
 }
 
+/**
+ * Calculate the number of channel slots to skip before the payload body.
+ * With scatter: header(64) + salt(128) = 192 slots.
+ * Without scatter: header(64) slots.
+ * @param {boolean} scatter - Whether scatter mode is active
+ * @returns {number} Number of slots to skip
+ */
+function calcPayloadSkipSlots(scatter) {
+  const base = CONFIG.stego.HEADER_SLOT_COUNT;
+  return scatter ? base + CONFIG.stego.SCATTER_SALT_SLOT_COUNT : base;
+}
+
+/**
+ * Read the scatter salt from the sequential preamble (after the header).
+ * Only valid for v2 payloads with scatter enabled.
+ * @param {Uint8ClampedArray} pixels - RGBA pixel data
+ * @returns {Uint8Array} 16-byte salt
+ */
+export function readScatterSalt(pixels) {
+  const saltBits = CONFIG.crypto.SALT_LENGTH * CONFIG.stego.BITS_PER_BYTE;
+  return readBits(
+    pixels, saltBits, 1, CONFIG.stego.DEFAULT_CHANNEL_MASK, null,
+    CONFIG.stego.HEADER_SLOT_COUNT
+  );
+}
+
 // ═══════════════════════════════════════════════
 // Public API
 // ═══════════════════════════════════════════════
@@ -99,10 +123,15 @@ export function embedPayload(imageData, encrypted, settings, slotOrder) {
   // Header is always written sequentially, 1-bit, all RGB, from slot 0
   writeBits(imageData.data, header, 1, CONFIG.stego.DEFAULT_CHANNEL_MASK, null, 0);
 
-  // Payload written with configured settings, skipping header slots
-  const headerSlots = CONFIG.stego.HEADER_SLOT_COUNT;
+  const skipSlots = calcPayloadSkipSlots(scatter);
+  if (scatter) {
+    // Write salt sequentially after header so decoder can read it before scatter
+    const salt = encrypted.slice(0, CONFIG.crypto.SALT_LENGTH);
+    writeBits(imageData.data, salt, 1, CONFIG.stego.DEFAULT_CHANNEL_MASK, null, CONFIG.stego.HEADER_SLOT_COUNT);
+  }
+
   const payloadSlotOrder = scatter ? slotOrder : null;
-  writeBits(imageData.data, encrypted, depth, channelMask, payloadSlotOrder, headerSlots);
+  writeBits(imageData.data, encrypted, depth, channelMask, payloadSlotOrder, skipSlots);
   return imageData;
 }
 
@@ -127,8 +156,8 @@ export function extractPayload(imageData, slotOrder) {
 
   let encrypted;
   if (version === 2) {
-    const headerSlots = CONFIG.stego.HEADER_SLOT_COUNT;
-    encrypted = readBits(imageData.data, payloadBits, depth, channelMask, payloadSlotOrder, headerSlots);
+    const skipSlots = calcPayloadSkipSlots(scatter);
+    encrypted = readBits(imageData.data, payloadBits, depth, channelMask, payloadSlotOrder, skipSlots);
   } else {
     encrypted = extractLegacyPayload(imageData.data, payloadLength, headerBytes);
   }
