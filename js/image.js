@@ -125,9 +125,8 @@ export function setupDragAndDrop() {
     el.addEventListener('drop', e => {
       e.preventDefault();
       el.classList.remove('drag-over');
-      const input = el.querySelector('input[type="file"]');
-      input.files = e.dataTransfer.files;
-      input.dispatchEvent(new Event('change'));
+      const mode = id === 'encode-drop' ? 'encode' : 'decode';
+      handleImage({ files: e.dataTransfer.files }, mode);
     });
   });
 }

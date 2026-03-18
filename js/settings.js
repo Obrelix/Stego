@@ -99,9 +99,7 @@ function initFileDropZone() {
   el.addEventListener('drop', e => {
     e.preventDefault();
     el.classList.remove('drag-over');
-    const input = document.getElementById('payload-file');
-    input.files = e.dataTransfer.files;
-    input.dispatchEvent(new Event('change'));
+    handleFilePayload({ files: e.dataTransfer.files });
   });
 }
 

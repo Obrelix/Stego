@@ -104,7 +104,7 @@ function loadImageElement(dataUrl) {
  * @returns {ImageData}
  */
 function getAnalyzeImageData(img) {
-  const canvas = document.getElementById('canvas');
+  const canvas = document.createElement('canvas');
   canvas.width = img.width;
   canvas.height = img.height;
   const ctx = canvas.getContext('2d');
@@ -123,8 +123,6 @@ function initAnalyzeDropZone() {
   el.addEventListener('drop', e => {
     e.preventDefault();
     el.classList.remove('drag-over');
-    const input = document.getElementById('analyze-file');
-    input.files = e.dataTransfer.files;
-    input.dispatchEvent(new Event('change'));
+    handleAnalyzeImage({ files: e.dataTransfer.files });
   });
 }

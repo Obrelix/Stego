@@ -83,10 +83,11 @@ export function serializeFilePayload(filename, mimeType, data) {
 /**
  * Deserialize a decrypted payload (v2 or legacy).
  * @param {Uint8Array} data - Decrypted bytes
+ * @param {number} version - Header version (1 or 2) from extractPayload
  * @returns {{ type: string, text?: string, filename?: string, mimeType?: string, data?: Uint8Array }}
  */
-export function deserializePayload(data) {
-  if (data[0] === CONFIG.stego.VERSION) {
+export function deserializePayload(data, version) {
+  if (version === 2) {
     return deserializeV2(data);
   }
   return { type: 'text', text: new TextDecoder().decode(data) };

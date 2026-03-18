@@ -12,13 +12,6 @@ import { encodeStegoFlags, parseStegoFlags } from './payload.js';
 // Private Helpers
 // ═══════════════════════════════════════════════
 
-/** Default settings for legacy 1-bit all-channel sequential mode. */
-const LEGACY_DEFAULTS = {
-  depth: 1,
-  channelMask: CONFIG.stego.DEFAULT_CHANNEL_MASK,
-  scatter: false,
-};
-
 /**
  * Read the header from pixel LSBs and determine format version.
  * Always reads with 1-bit depth, all RGB channels, sequential.
@@ -111,9 +104,12 @@ export function embedPayload(imageData, encrypted, settings, slotOrder) {
   const flags = encodeStegoFlags(depth, channelMask, scatter);
   const header = createV2Header(flags, encrypted.length);
 
-  const maxBytes = calculateMaxPayloadV2(
+  let maxBytes = calculateMaxPayloadV2(
     imageData.width, imageData.height, depth, channelMask
   );
+  if (scatter) {
+    maxBytes -= CONFIG.crypto.SALT_LENGTH;
+  }
   const totalBits = encrypted.length * CONFIG.stego.BITS_PER_BYTE;
   const availableBits = maxBytes * CONFIG.stego.BITS_PER_BYTE;
   if (totalBits > availableBits) {
@@ -178,22 +174,3 @@ function extractLegacyPayload(pixels, payloadLength, headerBytes) {
   return fullData.slice(headerBytes);
 }
 
-/**
- * Legacy embed function for backward compatibility.
- * @param {ImageData} imageData - Canvas ImageData to modify
- * @param {Uint8Array} payload - Encrypted bytes to embed
- * @returns {ImageData} The modified image data
- */
-export function embedBits(imageData, payload) {
-  return embedPayload(imageData, payload, LEGACY_DEFAULTS, null);
-}
-
-/**
- * Legacy extract function for backward compatibility.
- * @param {ImageData} imageData - Canvas ImageData to read from
- * @returns {Uint8Array} Extracted encrypted payload
- */
-export function extractBits(imageData) {
-  const { encrypted } = extractPayload(imageData, null);
-  return encrypted;
-}

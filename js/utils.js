@@ -17,28 +17,6 @@ export function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-/**
- * Create a 4-byte big-endian length header (legacy v1).
- * @param {number} length - The payload length
- * @returns {Uint8Array} 4-byte header
- */
-export function createLengthHeader(length) {
-  const header = new Uint8Array(CONFIG.stego.V1_HEADER_BYTES);
-  const view = new DataView(header.buffer);
-  view.setUint32(0, length, false);
-  return header;
-}
-
-/**
- * Parse a 4-byte big-endian length header (legacy v1).
- * Uses DataView to avoid signed int32 overflow.
- * @param {Uint8Array} header - 4-byte array
- * @returns {number} Decoded unsigned length
- */
-export function parseLengthHeader(header) {
-  const view = new DataView(header.buffer, header.byteOffset, header.byteLength);
-  return view.getUint32(0, false);
-}
 
 /**
  * Calculate max payload capacity for given image dimensions (v1 legacy).

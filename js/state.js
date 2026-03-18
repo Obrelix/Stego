@@ -51,12 +51,4 @@ export const APP_STATE = {
     /** @type {number} */
     size: 0,
   },
-  progress: {
-    /** @type {boolean} */
-    active: false,
-    /** @type {number} */
-    current: 0,
-    /** @type {number} */
-    total: 0,
-  },
 };

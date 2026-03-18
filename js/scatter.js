@@ -72,28 +72,16 @@ function fisherYatesShuffle(arr, rng) {
  */
 export async function generateScatterOrder(pixelDataLength, channelMask, passphrase, salt) {
   const allSlots = buildSlotArray(pixelDataLength, channelMask);
-  const headerSlots = CONFIG.stego.HEADER_SLOT_COUNT;
+  const reservedSlots = CONFIG.stego.HEADER_SLOT_COUNT + CONFIG.stego.SCATTER_SALT_SLOT_COUNT;
 
-  if (allSlots.length <= headerSlots) {
+  if (allSlots.length <= reservedSlots) {
     throw new Error('Image too small for scatter mode with current channel settings');
   }
 
-  const payloadSlots = allSlots.slice(headerSlots);
+  const payloadSlots = allSlots.slice(reservedSlots);
   const seed = await deriveScatterSeed(passphrase, salt);
   const rng = createXorshift128(seed);
   fisherYatesShuffle(payloadSlots, rng);
   return payloadSlots;
 }
 
-/**
- * Estimate memory usage for scatter permutation array.
- * @param {number} width - Image width
- * @param {number} height - Image height
- * @param {number} channelMask - Active channel bitmask
- * @returns {number} Estimated bytes of memory
- */
-export function estimateScatterMemory(width, height, channelMask) {
-  let channels = 0;
-  for (let i = 0; i < 3; i++) channels += (channelMask >> i) & 1;
-  return width * height * channels * 4;
-}

@@ -76,7 +76,7 @@ export function recalcMaxPayload() {
 export function updateCapacity() {
   const msg = document.getElementById('encode-msg').value;
   const len = new TextEncoder().encode(msg).length;
-  document.getElementById('encode-chars').textContent = msg.length;
+  document.getElementById('encode-chars').textContent = len;
   if (APP_STATE.maxPayloadBytes <= 0) return;
 
   const overhead = CONFIG.crypto.CRYPTO_OVERHEAD + CONFIG.stego.V2_INNER_PREFIX_BYTES;

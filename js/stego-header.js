@@ -48,18 +48,6 @@ export function parseV2Header(bytes) {
 }
 
 /**
- * Create a v1 legacy 4-byte big-endian length header.
- * @param {number} length - Payload length
- * @returns {Uint8Array} 4-byte header
- */
-export function createV1Header(length) {
-  const header = new Uint8Array(CONFIG.stego.V1_HEADER_BYTES);
-  const view = new DataView(header.buffer);
-  view.setUint32(0, length, false);
-  return header;
-}
-
-/**
  * Parse a v1 legacy 4-byte big-endian length header.
  * Uses DataView to avoid signed int32 overflow.
  * @param {Uint8Array} bytes - 4-byte header

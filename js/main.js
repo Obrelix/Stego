@@ -83,9 +83,9 @@ async function decode() {
   if (!APP_STATE.decode.imageData || !pass) return;
   try {
     setStatus('decode', 'Extracting LSB data from pixels...', 'working');
-    const { encrypted } = await extractWithScatter(APP_STATE.decode.imageData, pass);
+    const { encrypted, version } = await extractWithScatter(APP_STATE.decode.imageData, pass);
     setStatus('decode', 'Decrypting ' + encrypted.length + ' bytes...', 'working');
-    const result = deserializePayload(await decryptPayload(encrypted, pass));
+    const result = deserializePayload(await decryptPayload(encrypted, pass), version);
     document.getElementById('copy-btn').style.display = 'none';
     document.getElementById('file-download-link').style.display = 'none';
     if (result.type === 'text') {
@@ -119,7 +119,10 @@ function showFileResult(result) {
   document.getElementById('decoded-msg').textContent =
     'File: ' + result.filename + ' \u2014 ' + formatBytes(result.data.length);
   const link = document.getElementById('file-download-link');
-  link.href = URL.createObjectURL(blob);
+  if (link.dataset.objectUrl) URL.revokeObjectURL(link.dataset.objectUrl);
+  const url = URL.createObjectURL(blob);
+  link.dataset.objectUrl = url;
+  link.href = url;
   link.download = result.filename;
   link.style.display = 'inline-block';
   document.getElementById('decode-result').classList.add('visible');
