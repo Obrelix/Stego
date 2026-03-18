@@ -6,7 +6,7 @@
 
 import { CONFIG } from './config.js';
 import { APP_STATE } from './state.js';
-import { formatBytes } from './utils.js';
+import { formatBytes, calculateMaxPayloadV2 } from './utils.js';
 
 /**
  * Switch between encode and decode mode.
@@ -57,6 +57,18 @@ export function hideStatus(section) {
 }
 
 /**
+ * Recalculate max payload bytes from current settings and image dimensions.
+ */
+export function recalcMaxPayload() {
+  const { width, height } = APP_STATE.encode;
+  if (!width || !height) return;
+  const { depth, channelMask } = APP_STATE.settings;
+  APP_STATE.maxPayloadBytes = calculateMaxPayloadV2(width, height, depth, channelMask);
+  const capEl = document.getElementById('encode-cap');
+  if (capEl) capEl.textContent = formatBytes(APP_STATE.maxPayloadBytes);
+}
+
+/**
  * Update the capacity meter based on the current message input.
  */
 export function updateCapacity() {
@@ -65,7 +77,8 @@ export function updateCapacity() {
   document.getElementById('encode-chars').textContent = msg.length;
   if (APP_STATE.maxPayloadBytes <= 0) return;
 
-  const estimatedTotal = len + CONFIG.crypto.TOTAL_OVERHEAD;
+  const overhead = CONFIG.crypto.CRYPTO_OVERHEAD + CONFIG.stego.V2_INNER_PREFIX_BYTES;
+  const estimatedTotal = len + overhead;
   const pct = Math.min(
     (estimatedTotal / APP_STATE.maxPayloadBytes) * CONFIG.capacity.MAX_DISPLAY_PCT,
     CONFIG.capacity.MAX_DISPLAY_PCT

@@ -5,8 +5,8 @@
 // ═══════════════════════════════════════════════
 
 import { APP_STATE } from './state.js';
-import { formatBytes, calculateMaxPayload } from './utils.js';
-import { updateCapacity, validateDecode } from './ui.js';
+import { formatBytes } from './utils.js';
+import { updateCapacity, recalcMaxPayload, validateDecode } from './ui.js';
 
 // ═══════════════════════════════════════════════
 // Private Helpers
@@ -64,7 +64,7 @@ function updateEncodeState(img, file, dataUrl) {
   APP_STATE.encode.imageData = getImageData(img);
   APP_STATE.encode.width = img.width;
   APP_STATE.encode.height = img.height;
-  APP_STATE.maxPayloadBytes = calculateMaxPayload(img.width, img.height);
+  recalcMaxPayload();
 
   document.getElementById('encode-img').src = dataUrl;
   document.getElementById('encode-preview').style.display = 'block';
